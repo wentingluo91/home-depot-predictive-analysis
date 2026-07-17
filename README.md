@@ -4,7 +4,7 @@
 
 This project predicts customer spending at **The Home Depot** using historical customer data. Multiple predictive models were developed and compared, including **Linear Regression, Polynomial Regression, XGBoost, and Stochastic Gradient Descent (SGD)**. The goal is to identify the best-performing model and provide actionable business insights for marketing and revenue forecasting. :contentReference[oaicite:0]{index=0}
 
-## 📊 Methods
+## 🤖 Methods
 
 - Data preprocessing and feature engineering
 - Linear Regression
@@ -13,7 +13,7 @@ This project predicts customer spending at **The Home Depot** using historical c
 - Stochastic Gradient Descent (SGD)
 - Model evaluation using **R²** and **RMSE**
 
-## 🔍 Results
+## 💡 Results
 
 Among all models, **XGBoost achieved the best performance** with:
 
@@ -22,13 +22,22 @@ Among all models, **XGBoost achieved the best performance** with:
 
 Sensitivity analysis showed that **age**, **marketing activities**, and **shopping frequency** are the most influential factors affecting customer spending. :contentReference[oaicite:1]{index=1}
 
-## 🛠 Tools
+## 🛠️ Tools
 
 - R
 - XGBoost
 - ggplot2
 - dplyr
 
-## 📂 Author
+## 📂 Repository Contents
+
+| File | Description |
+|------|-------------|
+| `Predictive_Analysis_Report.pdf` | Final project report |
+| `Predictive_Analysis.Rmd` | R Markdown source code |
+| `Predictive_Analysis.R` | R script for data preprocessing and modeling |
+| `HomeDepot.xlsx` | Source dataset |
+
+## 👩‍💻 Author
 
 **Wenting Luo**
