@@ -100,9 +100,7 @@ Future enhancements may include:
 
 ---
 
-## 👤 About the Author
+## 👤 Author
 
 **Wenting Luo**
 
----
-⭐ If you found this project helpful, feel free to explore the repository!
