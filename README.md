@@ -82,9 +82,9 @@ The XGBoost model achieved the highest prediction accuracy while maintaining the
 | File | Description |
 |------|-------------|
 | `README.md` | Project overview and documentation |
+| `homedepot.csv` | Source dataset |
 | `homedepot_predictive_analysis.pdf` | Final project report |
 | `homedepot_predictive_analysis.Rmd` | R Markdown source code |
-| `homedepot.csv` | Source dataset |
 
 ---
 
