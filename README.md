@@ -104,15 +104,5 @@ Future enhancements may include:
 
 **Wenting Luo**
 
-M.S. Business Analytics
-
-**Areas of Interest**
-
-- Predictive Analytics
-- Machine Learning
-- Operations Research
-- Supply Chain Analytics
-- Decision Science
-
 ---
 ⭐ If you found this project helpful, feel free to explore the repository!
