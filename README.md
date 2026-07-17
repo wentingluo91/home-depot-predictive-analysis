@@ -104,3 +104,4 @@ Future enhancements may include:
 
 **Wenting Luo**
 
+If you have any questions, suggestions, or just want to say hello, you can reach out to [Wenting Luo](mailto:wentingluo91@gmail.com). I would love to hear from you!
