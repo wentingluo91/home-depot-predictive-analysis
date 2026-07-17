@@ -1,33 +1,81 @@
-# 📊 Predictive Analysis of Customer Spending at The Home Depot
+# 📊 Home Depot Customer Spending Prediction
 
-## 📖 Overview
+> **Machine Learning | Predictive Analytics | Business Analytics**
 
-This project predicts customer spending at **The Home Depot** using historical customer data. Multiple predictive models were developed and compared, including **Linear Regression, Polynomial Regression, XGBoost, and Stochastic Gradient Descent (SGD)**. The goal is to identify the best-performing model and provide actionable business insights for marketing and revenue forecasting. :contentReference[oaicite:0]{index=0}
+This project develops and compares multiple predictive models to forecast annual customer spending at **The Home Depot**. Four predictive models were evaluated to identify the most accurate forecasting approach and provide actionable business insights for revenue forecasting and marketing strategy.
 
-## 🤖 Methods
+---
 
-- Data preprocessing and feature engineering
+## 🎯 Project Overview
+
+The primary objectives of this project are to:
+
+- Predict annual customer spending (`spend12`)
+- Compare the performance of multiple predictive models
+- Identify the key drivers of customer spending
+- Generate business recommendations based on model results
+
+---
+
+## 🧠 Modeling Pipeline
+
+### Data Preprocessing
+
+- Distribution analysis
+- Log transformation
+- Feature engineering
+- Train/Test Split (70% / 30%)
+
+### Predictive Models
+
 - Linear Regression
 - Polynomial Regression
 - XGBoost
 - Stochastic Gradient Descent (SGD)
-- Model evaluation using **R²** and **RMSE**
 
-## 💡 Results
+### Model Evaluation
 
-Among all models, **XGBoost achieved the best performance** with:
+- R²
+- RMSE
+- Feature Importance
+- Sensitivity Analysis
 
-- **R² = 0.996**
-- **RMSE = 0.024**
+---
 
-Sensitivity analysis showed that **age**, **marketing activities**, and **shopping frequency** are the most influential factors affecting customer spending. :contentReference[oaicite:1]{index=1}
+## 📈 Model Performance
 
-## 🛠️ Tools
+| Model | R² | RMSE |
+|-------|----:|----:|
+| Linear Regression | 0.977 | 0.055 |
+| Polynomial Regression | 0.988 | 0.039 |
+| ⭐ XGBoost | **0.996** | **0.024** |
+| SGD | 0.346 | 0.295 |
 
-- R
-- XGBoost
-- ggplot2
-- dplyr
+**Best Model:** **XGBoost**
+
+The XGBoost model achieved the highest prediction accuracy while maintaining the lowest prediction error, demonstrating superior capability in modeling nonlinear customer behavior.
+
+---
+
+## 💡 Key Business Insights
+
+- 👥 **Customer age** is the most influential predictor of annual spending.
+- 📈 Spending follows an **inverted U-shaped** relationship with age.
+- 🎯 Marketing activities positively affect customer spending, but the marginal benefit gradually decreases.
+- 🛒 Increasing shopping frequency among low-engagement customers generates the largest increase in spending.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Language:** R
+- **Machine Learning:** XGBoost
+- **Statistical Modeling:** Linear Regression, Polynomial Regression
+- **Visualization:** ggplot2
+- **Data Manipulation:** dplyr
+- **Documentation:** R Markdown
+
+---
 
 ## 📂 Repository Contents
 
@@ -35,9 +83,36 @@ Sensitivity analysis showed that **age**, **marketing activities**, and **shoppi
 |------|-------------|
 | `Predictive_Analysis_Report.pdf` | Final project report |
 | `Predictive_Analysis.Rmd` | R Markdown source code |
-| `Predictive_Analysis.R` | R script for data preprocessing and modeling |
+| `Predictive_Analysis.R` | Data preprocessing and model development |
 | `HomeDepot.xlsx` | Source dataset |
 
-## 👩‍💻 Author
+---
+
+## 🚀 Future Improvements
+
+Future enhancements may include:
+
+- Cross-validation
+- Hyperparameter tuning
+- SHAP model interpretation
+- Random Forest / LightGBM comparison
+- Interactive dashboard (Streamlit or Power BI)
+
+---
+
+## 👤 About the Author
 
 **Wenting Luo**
+
+M.S. Business Analytics
+
+**Areas of Interest**
+
+- Predictive Analytics
+- Machine Learning
+- Operations Research
+- Supply Chain Analytics
+- Decision Science
+
+---
+⭐ If you found this project helpful, feel free to explore the repository!
