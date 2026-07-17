@@ -1,0 +1,351 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{geometry}
+  - \geometry{left=1cm, right=0.7cm, top=1cm, bottom=0.6cm}
+---
+
+# Predictive Analysis of Customer Spending at The Home Depot and Strategic Recommendations
+Report by: Wenting Luo
+
+## I. Contextual Overview 
+This report aims to forecast customer spending at The Home Depot over the next year using various predictive methods. Leveraging historical data from 50,000 customers in the previous year, including variables such as age, distance to store, trip frequency, and marketing interactions, we seek to assess the accuracy of linear regression, polynomial regression, Extreme Gradient Boosting (XGBoost), and Stochastic Gradient Descent (sgd) models. We will identify the best predictive model and conduct sensitivity analysis on variables to demonstrate how changes in variables may impact next year's revenue. Ultimately, our analysis aims to provide actionable insights for finance teams to improve earnings projections and strategic planning.
+```{r,include=FALSE}
+library(Hmisc)
+library(corrplot)
+library(ggplot2)
+library(reshape2)
+library(psych)
+library(dplyr)
+library(car)
+library(knitr)
+library(broom)
+```
+## II. Data Preprocessing for Customer Spend Forecast Modeling 
+By examining the data distribution and correlation analysis between variables, we preprocessed the data before modeling by removing low-correlation fields such as distance to store (dist, log_dist) and population density (pop) with total spend in the last 12 months (spend12). Additionally, we conducted a logarithmic transformation on spend12 to make the right-skewed data distribution more closely resemble a normal distribution. We squared age to capture nonlinear relationships between variables and enhance the model's fitting ability. Similarly, we applied a square root transformation to Marketing offers received in the prior month (nMarketing) to make it closer to a normal distribution. In summary, removing ineffective fields and applying appropriate data transformations can help improve the accuracy, robustness, and interpretability of the model.
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE, include =TRUE, fig.height=2,fig.width=14}
+homedepot <- read.csv("C:/Desktop/Profolio/Home Depot/homedepot.csv")
+homedepot1 <- select(homedepot, -id)
+homedepot1$log_spend12 <- log(homedepot1$spend12)
+homedepot1$log_dist <- log(homedepot1$dist)
+homedepot1$nMarketing_sqrt <- sqrt(homedepot1$nMarketing)
+homedepot1$age_squared <- homedepot1$age^2
+num_col <- sapply(homedepot1, is.numeric)
+multi.hist(homedepot1[, num_col], nrow = 1,  global = FALSE)
+```
+```{r,include=FALSE}
+correlation_matrix <- cor(homedepot1)
+cor_df <- melt(correlation_matrix)
+
+# Plot heatmap using ggplot2
+ggplot(cor_df, aes(Var1, Var2, fill = value, label = round(value, 2))) +
+  geom_tile(color = "white") +
+  geom_text(size = 3, color = "black") +
+  scale_fill_gradient2(low = "#4575b4", mid = "#ffffff", high = "#d73027", midpoint = 0) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Correlation Heatmap", x = "", y = "")
+```
+
+50,000 historical data from customers were used for predictive modeling, with 70% serving as the training set and 30% as the test set to evaluate the model's accuracy.
+
+## II. Four Customer Spending Forecast Modeling and Result Comparison
+
+### 1. Linear Regression Model
+
+Linear regression model aims to explain the linear relationship between independent and dependent variables.
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+# Set seed for reproducibility
+set.seed(123)
+
+# Randomly split the data into training and testing sets, with 70% for training and 30% for testing
+train_index <- sample(1:nrow(homedepot1), 0.7 * nrow(homedepot1))
+train_data <- homedepot1[train_index, ]
+test_data <- homedepot1[-train_index, ]
+
+# model 1: linear regression model
+# semi-log model: log(y) = β0 + β1*x
+linear_regression_model <- lm(log_spend12 ~ age + tripFreq + nMarketing, train_data)
+
+# Extract model coefficients
+lm_coefficients <- coef(linear_regression_model)
+
+# Predictions
+lm_preds <- predict(linear_regression_model, newdata = test_data)
+
+# Root Mean Squared Error (RMSE)
+rmse1 <- sqrt(mean((test_data$log_spend12 - lm_preds)^2))
+
+# R-squared
+rsquared1 <- summary(linear_regression_model)$r.squared
+
+```
+
+**log(spend12) = 4.788 + 0.035 * age +0.005 * tripFreq + 0.114 * nMarketing**
+
+When age increases by 1 year, spend12 is expected to increase by 3.5% (100% * 0.035). Similarly, a one-unit increase in tripFreq leads to a 0.5% (100% * 0.005) increase in spend12, while a $1 increase in nMarketing corresponds to a spend12 increase of 1.14% (100% * 0.114).
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE,include=FALSE}
+summary_data1 <- summary(linear_regression_model)
+
+result_table1 <- tidy(summary_data1) %>% mutate_at(-1,round,3)
+
+kable(result_table1, booktabs = TRUE, caption = "Linear Regression Model")
+```
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+result <- paste("R-squared:", round(rsquared1, 3), "RMSE:", round(rmse1, 3))
+cat(result)
+```
+This linear regression model performs exceptionally well, explaining 97.7% of the data variance, with a low RMSE of 0.055, demonstrating accurate spend12 estimation.
+
+### 2. Polynomial Regression Model
+
+The polynomial regression model aims to capture the relationship between the independent and dependent variables using a polynomial function. It achieves this by fitting a curve to the data, allowing for non-linear relationships to be modeled. 
+```{r,include=FALSE}
+# Set seed for reproducibility
+set.seed(124)
+
+# Randomly split the data into training and testing sets, with 70% for training and 30% for testing
+train_index <- sample(1:nrow(homedepot1), 0.7 * nrow(homedepot1))
+train_data <- homedepot1[train_index, ]
+test_data <- homedepot1[-train_index, ]
+
+# model 1: linear regression model
+polynomial_regression_model <- lm(log_spend12 ~ poly(age, 2, raw=TRUE) + tripFreq + sqrt(nMarketing) + nMarketing, train_data)
+
+# Extract model coefficients
+poly_coefficients <- coef(polynomial_regression_model)
+
+# Predictions
+poly_preds <- predict(polynomial_regression_model, newdata = test_data)
+
+# Root Mean Squared Error (RMSE)
+rmse2 <- sqrt(mean((test_data$log_spend12 - poly_preds)^2))
+
+# R-squared
+rsquared2 <- summary(polynomial_regression_model)$r.squared
+```
+
+**log(spend12) = 4.182 + 0.0601 * age - 0.0003 * squared(age) + 0.0054 * tripFreq - 0.0866 * sqrt(nMarketing) + 0.1747 * nMarketing**
+
+The age variable shows a non-linear relationship with spend12, as indicated by the positive linear coefficient (0.0601) and the negative quadratic coefficient (-0.0003). Initially, spend12 increases with age, but beyond a certain threshold, it starts to decrease, forming an inverted U-shaped pattern.
+
+nMarketing has a linear term coefficient and a square root term coefficient. This implies that the influence of the number of marketing activities exhibits a non-linear relationship.
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE,include=FALSE}
+summary_data2 <- summary(polynomial_regression_model)
+
+result_table2 <- tidy(summary_data2) %>% mutate_at(-1,round,3)
+
+kable(result_table2, booktabs = TRUE, caption = "Polynomial Regression Model")
+```
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+# Print RMSE and R-squared with three decimal places
+result <- paste("R-squared:", round(rsquared2, 3), "RMSE:", round(rmse2, 3))
+cat(result)
+```
+R-squared value closer to 1 indicates a better fit of the model to the data, while RMSE value represents the degree of prediction error of the model, with smaller values indicating better predictive performance. It can be seen that the polynomial regression model slightly outperforms the linear model in terms of both data fitting and prediction accuracy.
+
+### 3. Extreme Gradient Boosting Model
+
+XGBoost is a machine learning algorithm that improves accuracy through an ensemble of decision trees. It focuses on correcting the mistakes of previous trees, gradually reducing errors to produce highly accurate models. This ensemble approach captures non-linear relationships and complex patterns in the data, leading to superior predictive and generalization performance.
+
+```{r,include=FALSE}
+# Set seed for reproducibility
+set.seed(125)
+
+# Randomly split the data into training and testing sets, with 70% for training and 30% for testing
+train_index <- sample(1:nrow(homedepot1), 0.7 * nrow(homedepot1))
+train_data <- homedepot1[train_index, ]
+test_data <- homedepot1[-train_index, ]
+
+# Extreme Gradient Boosting
+library(xgboost)
+library(xtable)
+
+# Define XGBoost model
+xgb_model <- xgboost(data = as.matrix(train_data[, c("age", "tripFreq", "nMarketing")]),
+                     label = train_data$log_spend12,
+                     nrounds = 100, # Number of iterations
+                     objective = "reg:squarederror", # Objective function is mean squared error
+                     eta = 0.1, # Learning rate
+                     max_depth = 3, # Maximum tree depth
+                     gamma = 0, # Minimum split gain
+                     subsample = 0.8, # Subsample ratio of the training instances
+                     colsample_bytree = 0.8, # Subsample ratio of columns when constructing each tree
+                     eval_metric = "rmse", # Evaluation metric is root mean squared error
+                     verbose = 0) # Do not print detailed training process
+
+# Make predictions using the XGBoost model
+preds_xgb <- predict(xgb_model, as.matrix(test_data[, c("age", "tripFreq", "nMarketing")]))
+
+# Calculate root mean squared error
+rmse_xgb <- sqrt(mean((test_data$log_spend12 - preds_xgb)^2))
+
+# Calculate R-squared
+rsquared_xgb <- cor(test_data$log_spend12, preds_xgb)^2
+```
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+# Display feature importance
+importance <- xgb.importance(colnames(as.matrix(train_data[, c("age", "tripFreq", "nMarketing")])), model = xgb_model)
+importance <- importance %>%
+  mutate(across(where(is.numeric), round, 3))
+kable(importance, caption = "Feature Importance from XGBoost Model")
+```
+Features such as age, nMarketing, and tripFreq were considered in the model. Age notably stands out with the highest gain, indicating its significant influence on predictions. While all features have uniform coverage, age appears most frequently in the training data, suggesting its prominent role in model construction.
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+# Print results
+result <- paste("R-squared:", round(rsquared_xgb, 3), "RMSE:", round(rmse_xgb, 3))
+cat(result)
+```
+Compared with the linear and polynomial regression model, the output results of this xgboost model are the best.
+
+### 4. Stochastic Gradient Descent Model
+
+Stochastic Gradient Descent (SGD) is an optimization algorithm that minimizes the error between a model's predictions and the actual results by continuously adjusting the model parameters. It randomly selects a small batch of training data, computes the error (loss function) on this batch, and then updates the model parameters to make the next prediction closer to the actual result.
+
+```{r,include=FALSE}
+set.seed(127)
+
+# Randomly split the data into training and testing sets, with 70% for training and 30% for testing
+train_index <- sample(1:nrow(homedepot1), 0.7 * nrow(homedepot1))
+train_data <- homedepot1[train_index, ]
+test_data <- homedepot1[-train_index, ]
+
+# Load the sgd package
+library(sgd)
+
+# Set the dependent and independent variables
+y <- train_data$log_spend12
+X <- as.matrix(train_data[, c("age", "tripFreq", "nMarketing")])
+
+# Split the data into training and testing sets
+test_index <- setdiff(1:nrow(train_data), train_index)
+test_data <- train_data[test_index, ]
+train_data <- train_data[train_index, ]
+
+# Build the ridge regression model
+ridge_model <- sgd(y ~ age + tripFreq + nMarketing, data = train_data, model = "glm", sgd.control = list(method = "sgd", lr = "adagrad"))
+
+# Extract model coefficients
+model_coefficients <- coef(ridge_model)
+
+# Extract independent variables and convert them into a numeric matrix
+test_matrix <- as.matrix(test_data[, c("age", "tripFreq", "nMarketing")])
+
+# Add intercept to the test data matrix
+test_matrix_with_intercept <- cbind(1, test_matrix)
+
+# Predict future 12-month income
+preds_sgd <- test_matrix_with_intercept %*% model_coefficients
+```
+
+```{r,include=FALSE}
+# Calculate residuals
+residuals <- test_data$log_spend12 - preds_sgd
+
+# Calculate root mean squared error
+rmse_sgd <- sqrt(mean(residuals^2))
+
+# Calculate R-squared
+y_mean <- mean(test_data$log_spend12)
+sst <- sum((test_data$log_spend12 - y_mean)^2)
+ssr <- sum(residuals^2)
+rsquared_sgd <- 1 - (ssr / sst)
+```
+```{r,include=FALSE}
+coefficients <- coef(ridge_model)
+print(coefficients)
+```
+**log(spend12) = 3.708 + 0.050 * age + 0.19 * tripFreq - 0.05 * nMarketing**
+
+The relationship between variables is similar to the first linear regression model.
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+# Print results
+result <- paste("R-squared:", round(rsquared_sgd, 3), "RMSE:", round(rmse_sgd, 3))
+cat(result)
+```
+The SGD model's performance is subpar, explaining only 34.6% of the variance in the dependent variable and exhibiting an average prediction error of about 0.295 units.
+
+## III. Customer Spending Forecast model Analysis and Strategic Recommendations
+The comprehensive analysis indicates that the XGBoost model outperforms others in predicting the target. Compared to other models, XGBoost exhibits a higher R-squared value (0.996) and a lower RMSE value (0.024), suggesting better fitting to the data and smaller prediction errors. This demonstrates XGBoost's ability to accurately capture patterns and relationships within the data, thereby enhancing prediction accuracy and generalization capability.
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+
+sensitivity_analysis <- function(model, data, feature, values) {
+  results <- list()
+  for (value in values) {
+
+    data_temp <- data
+
+    data_temp[[feature]] <- value
+
+    predictions <- predict(model, as.matrix(data_temp[, c("age", "tripFreq", "nMarketing")]))
+
+    results[[as.character(value)]] <- mean(predictions)
+  }
+  return(results)
+}
+```
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+feature <- "age"
+values <- seq(18, 90, by = 2)
+
+sensitivity_results <- sensitivity_analysis(xgb_model, test_data, feature, values)
+sensitivity_df <- data.frame(age = values, Predicted_Outcome = unlist(sensitivity_results))
+sensitivity_df$Predicted_Outcome <- exp(sensitivity_df$Predicted_Outcome)
+
+sa1 <- ggplot(sensitivity_df, aes(x = age, y = Predicted_Outcome)) +
+  geom_line() + 
+  geom_point() +
+  labs(title = paste("Sensitivity Analysis for", feature),
+       x = feature, y = "Predicted Spend12")
+```
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE, include =TRUE, fig.height=2,fig.width=4}
+feature <- "nMarketing"
+values <- seq(0, 3, by = 1)
+
+sensitivity_results <- sensitivity_analysis(xgb_model, test_data, feature, values)
+
+sensitivity_df <- data.frame(nMarketing = values, Predicted_Outcome = unlist(sensitivity_results))
+sensitivity_df$Predicted_Outcome <- exp(sensitivity_df$Predicted_Outcome)
+
+sa2 <- ggplot(sensitivity_df, aes(x = nMarketing, y = Predicted_Outcome)) +
+  geom_line() + 
+  geom_point() +
+  labs(title = paste("Sensitivity Analysis for", feature),
+       x = feature, y = "Predicted Spend12")
+```
+```{r,echo=FALSE,warning=FALSE,message=FALSE, include =TRUE, fig.height=2,fig.width=4}
+feature <- "tripFreq"
+values <- seq(0, 3, by = 0.2) 
+
+sensitivity_results <- sensitivity_analysis(xgb_model, test_data, feature, values)
+
+sensitivity_df <- data.frame(tripFreq = values, Predicted_Outcome = unlist(sensitivity_results))
+sensitivity_df$Predicted_Outcome <- exp(sensitivity_df$Predicted_Outcome)
+
+sa3 <- ggplot(sensitivity_df, aes(x = tripFreq, y = Predicted_Outcome)) +
+  geom_line() +  
+  geom_point() +  
+  labs(title = paste("Sensitivity Analysis for", feature),
+       x = feature, y = "Predicted Spend12")
+```
+```{r,echo=FALSE,warning=FALSE,message=FALSE, include =TRUE, fig.height=2,fig.width=14}
+library(gridExtra)
+grid.arrange(sa1, sa2, sa3, nrow = 1)
+```
+
+As age increases, spending gradually rises, reaching a peak around 50 years old before slightly declining. The age-spending relationship follows an inverted U-shape, suggesting that enhancing product/service appeal between ages 20-50 yields greater returns, while targeted strategies become more critical after 50.
+
+When nMarketing increases from 0 to 1, the impact on spending is modest; however, increasing to 2 or 3 leads to a significant boost. Moderate increments in marketing investment can enhance spending, but excessive spending may result in diminishing returns.
+
+For tripFreq, an increase from 0 to 1 leads to a substantial spending increase, but the effect diminishes when tripFreq reaches 2 or 3. Encouraging participation among low-engagement customers yields significant returns, but further increasing engagement among already highly engaged customers yields diminishing returns.
